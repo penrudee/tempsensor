@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+  {% if title %}
+  <title>TempSensor - {{ title }}</title>
+  {% else %}
+  <title>TempSensor</title>
+  {% endif %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- <link rel="stylesheet" href="{{url_for('static',filename='bower_components/RWD-Table-Patterns/css/rwd-table.min.css')}}"> -->
+  <!--MediumEditor-->
+  
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  
+</head>
+
+<body>
+
+  <div class="wrapper d-flex align-items-stretch order-sm-1">
+    <nav id="sidebar">
+      <div class="p-4 pt-5">
+
+
+
+
+
+        <ul class="list-unstyled components mb-5">
+          <li class="active">
+            <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
+            <ul class="collapse list-unstyled" id="homeSubmenu">
+              <li>
+                <a href="#">Dashboard</a>
+              </li>
+              <li>
+                {% if current_user.is_authenticated %}
+                <a href="#">Add Business Unit</a>
+
+                {% else %}
+                {% endif %}
+              </li>
+
+              {% if current_user.is_authenticated %}
+              <li>
+                <a href="#">Admin Page</a>
+
+                {% else %}
+
+
+              </li>
+              {% endif %}
+            </ul>
+          </li>
+          {% if current_user.is_authenticated %}
+          <li>
+            <a href="#">Profile</a>
+            <a href="#">Dashboard</a>
+            {% else %}
+            
+            {% endif %}
+          </li>
+          
+
+        </ul>
+
+
+
+      </div>
+    </nav>
+
+    <!-- Page Content  -->
+    <div id="content" class="p-4 p-md-5" id="sidemenu">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+
+          <button type="button" id="sidebarCollapse" class="btn btn-primary">
+            <i class="fa fa-bars"></i>
+            <span class="sr-only">Toggle Menu</span>
+          </button>
+          <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <i class="fa fa-bars"></i>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+            <ul class="nav navbar-nav ml-auto mx-auto" style="margin-left: auto !important;">
+
+              <li class="nav-item active">
+                <a class="nav-link" href="#">Dashboard</a>
+              </li>
+              <li class="nav-item">
+                {% if current_user.is_authenticated  %}
+                <a class="nav-link" href="# ">Business Unit</a>
+                {% else %}
+
+                {% endif %}
+              </li>
+              <li class="nav-item">
+                {% if current_user.is_authenticated  %}
+                <a class="nav-link" href="# ">log out</a>
+                {% else %}
+                <a class="nav-link" href="#">log in</a>
+                {% endif %}
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" href="#">Contact</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+
+      {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">
+        {{ message }}
+
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+
+  </div>
+  <div class="order-sm-12">
+
+  </div>
+  <script>
+    $(document).ready(function () {
+      var tradename = [];
+      async function loadTradeName() {
+        try {
+          $.getJSON("#", function (data, status, xhr) {
+            for (var i = 0; i < data.length; i++) {
+              tradename.push(data[i].tname);
+            }
+          })
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      loadTradeName().then();
+
+      $('#gsearch').autocomplete({
+        source: tradename
+      })
+
+    })
+  </script>
+  <!-- <script src="{{url_for('static',filename='bower_components/RWD-Table-Patterns/src/js/rwd-table.js')}}"></script> -->
+  <!-- <script src="{{url_for('static',filename='js/jquery.min.js')}}"></script> -->
+  <script src="{{url_for('static',filename='js/popper.js')}}"></script>
+  <script src="{{url_for('static',filename='js/bootstrap.min.js')}}"></script>
+  <script src="{{url_for('static',filename='js/main.js')}}"></script>
+
+  <script>
+    $(document).ready(function () {
+        $('.datepicker').datepicker({
+            format: 'dd-mm-yyyy',
+            todayBtn: true,
+            language: 'th',             //เปลี่ยน label ต่างของ ปฏิทิน ให้เป็น ภาษาไทย   (ต้องใช้ไฟล์ bootstrap-datepicker.th.min.js นี้ด้วย)
+            thaiyear: false              //Set เป็นปี พ.ศ.
+        }).datepicker("setDate", "0");  //กำหนดเป็นวันปัจุบัน
+    });
+</script>
+</body>
+
+</html>

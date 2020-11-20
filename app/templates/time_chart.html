@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    {% if title %}
+    <title>{{title}}</title>
+    {% else %}
+    <title>Chart Temperature and Humidity</title>
+    {% endif %}
+    <!-- #region bootstrap-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- #endregion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.5/jspdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <!-- import plugin script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+    <!-- <script src="{{url_for('static',filename='Chart.min.js')}}"></script> -->
+  </head>
+  <body>
+    <div class="container">
+      
+    {% for n in nd %}
+    <h1>Temperature Sensor #{{n.node}}</h1>
+    
+    {% endfor %}
+    <!-- bar chart canvas element -->
+    <div class="row" style="margin: 6px;">
+      
+        <div style="margin-right: 6px;">
+          <a href="#" class="btn btn-primary btn-sm" style="background-color: #e1ecf4;color: #39739d;">Back</a>
+
+        </div>
+        <div style="margin-right: 6px;">
+          <p><button class="btn btn-primary btn-sm" onclick="saveAsPDF();">Save to PDF</button></p>
+
+        </div>
+      
+        
+    </div>
+    <div class="chart-container">
+      <canvas id="myChart" width="600" height="400"></canvas>
+      <p id="pointSelected">Point selected:</p>
+    </div>
+    
+
+    <script>
+      // Global parameters:
+      // do not resize the chart canvas when its container does (keep at 600x400px)
+      Chart.defaults.global.responsive = false;
+
+      var timeFormat = 'hh:mm:ss';
+
+      function newDateString(hours, minutes, seconds) {
+		return moment().hour(hours).minute(minutes).second(seconds).format(timeFormat);
+	  }
+
+      // define the chart data
+      var chartData = {
+        labels : [{% for item in labels %}
+                   newDateString( {{item.hour}}, {{item.minute}}, {{item.second}} ),
+                  {% endfor %}],
+        datasets : [{
+            label: '{{ legend }}',
+            fill: false,
+            lineTension: 0.1,
+            backgroundColor: "rgba(75,192,192,0.4)",
+            borderColor: "rgba(0, 119, 290, 0.6)",
+            borderCapStyle: 'butt',
+            borderDash: [],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "rgba(75,192,192,1)",
+            pointBackgroundColor: "#0a66c2",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+            pointHoverBorderColor: "rgba(220,220,220,1)",
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data : [{% for item in values %}
+                      {{item}},
+                    {% endfor %}],
+            spanGaps: false
+        },{
+          label: '{{ hight_limit }}',
+            fill: false,
+            lineTension: 0.1,
+            backgroundColor: "rgba(75,192,192,0.4)",
+            borderColor: "red",
+            borderCapStyle: 'butt',
+            borderDash: [10,5],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "rgba(75,192,192,1)",
+            pointBackgroundColor: "#fff",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+            pointHoverBorderColor: "rgba(220,220,220,1)",
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data : [{% for item in hlimit %}
+                      {{item}},
+                    {% endfor %}],
+            spanGaps: false
+
+        },
+        {
+          label: '{{ low_limit }}',
+            fill: false,
+            lineTension: 0.1,
+            backgroundColor: "rgba(75,192,192,0.4)",
+            borderColor: "blue",
+            borderCapStyle: 'butt',
+            borderDash: [10,5],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "rgba(75,192,192,1)",
+            pointBackgroundColor: "#fff",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(75,192,192,1)",
+            pointHoverBorderColor: "rgba(220,220,220,1)",
+            pointHoverBorderWidth: 2,
+            pointRadius: 1,
+            pointHitRadius: 10,
+            data : [{% for item in lowlimit %}
+                      {{item}},
+                    {% endfor %}],
+            spanGaps: false
+
+        },
+        {
+          label: '{{ AbnormalTemperature }}',
+            fill: false,
+            lineTension: 0.1,
+            // backgroundColor: "black",
+            // borderColor: "black",
+            borderCapStyle: 'butt',
+            borderDash: [10,5],
+            borderDashOffset: 0.0,
+            borderJoinStyle: 'miter',
+            pointBorderColor: "red",
+            pointBackgroundColor: "red",
+            pointBorderWidth: 1,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "red",
+            pointHoverBorderColor: "red",
+            pointHoverBorderWidth: 2,
+            pointRadius: 3,
+            pointHitRadius: 10,
+            data : [{% for item in values3 %}
+                      {{item}},
+                    {% endfor %}],
+            spanGaps: false
+
+        }
+        
+        
+        ]
+      }
+
+      // get chart canvas
+      var holder = document.getElementById("myChart");
+      var ctx = document.getElementById("myChart").getContext("2d");
+
+      // create a callback function for updating the caption
+      var original = Chart.defaults.global.legend.onClick;
+      Chart.defaults.global.legend.onClick = function(e, legendItem) {
+        update_caption(legendItem);
+        original.call(this, e, legendItem);
+      };
+
+      // create the chart using the chart canvas
+      var myChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          tooltips: {
+            enabled: true,
+            mode: 'single',
+            callbacks: {
+              label: function(tooltipItems, data) {
+                       firstPointCtx = "First Point Selected: (2:20PM, 72.3 degrees)";
+                       return tooltipItems.yLabel + ' degrees';
+                     }
+            }
+          },
+        }
+      });
+
+      // get the text element below the chart
+      var pointSelected = document.getElementById("pointSelected");
+
+      // create a callback function for updating the selected index on the chart
+      holder.onclick = function(evt){
+        var activePoint = myChart.getElementAtEvent(evt);
+        console.log(activePoint);
+        console.log('x:' + activePoint[0]._view.x);
+        console.log('maxWidth: ' + activePoint[0]._xScale.maxWidth);
+        console.log('y: ' + activePoint[0]._view.y);
+        console.log('index: ' + activePoint[0]._index);
+        pointSelected.innerHTML = 'Point selected... index: ' + activePoint[0]._index;
+      };
+      setTimeout(function () {
+          location.reload();
+        }, 300000)
+       
+
+
+        
+        
+    </script>
+
+      <script>
+        function saveAsPDF() {
+        html2canvas(document.querySelector(".chart-container"), {
+        onrendered: function(canvas) {
+         var img = canvas.toDataURL(); //image data of canvas
+         var doc = new jsPDF();
+         doc.addImage(img, 10, 10);
+         doc.save('chart.pdf');
+              }
+          });
+        }
+      </script>
+    </div>
+  </body>
+</html>
+
